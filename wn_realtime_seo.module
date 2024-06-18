@@ -12,7 +12,7 @@ use Drupal\wn_realtime_seo\RealtimeSeoFieldManager;
  * Implements hook_form_FORM_ID_alter() for node_form().
  */
 function wn_realtime_seo_form_node_form_alter(&$form, &$form_state, $form_id) {
-  $form['#after_build'] = ['wn_realtime_seo_form_node_afterbuild'];
+  $form['#after_build'][] = 'wn_realtime_seo_form_node_afterbuild';
 }
 
 function wn_realtime_seo_form_node_afterbuild($form, FormStateInterface $form_state): array {
