@@ -23,11 +23,11 @@ final class YoastSeoDrupalSettingsBuilder {
     );
   }
 
-  public function setDefaultText(string $default_text) {
+  public function setDefaultText(array $default_text) {
     $this->settings['yoast_seo']['default_text'] = $default_text;
   }
 
-  public function setPlaceholders(string $placeholders) {
+  public function setPlaceholders(array $placeholders) {
     $this->settings['yoast_seo']['placeholder_text'] = $placeholders;
   }
 
