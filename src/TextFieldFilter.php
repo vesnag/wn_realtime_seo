@@ -22,8 +22,10 @@ final class TextFieldFilter {
 
       if ($this->isTextField($field_definition)) {
         $text_fields[$field_key] = $parent_entity ? sprintf('%s: %s', $parent_entity, $field_definition->getLabel()) : $field_name;
+        continue;
       }
-      elseif ($this->isEntityReferenceToParagraph($field_definition)) {
+
+      if ($this->isEntityReferenceToParagraph($field_definition)) {
         $paragraph_field_definitions = $this->getParagraphFieldDefinitions($field_definition);
         $nested_text_fields = $this->filterTextFields($paragraph_field_definitions, $field_key);
         $text_fields = array_merge($text_fields, $nested_text_fields);
@@ -54,6 +56,7 @@ final class TextFieldFilter {
       'text_with_summary',
       'text_long',
       'string_long',
+      'string',
     ];
   }
 
