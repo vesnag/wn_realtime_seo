@@ -5,7 +5,6 @@ namespace Drupal\wn_realtime_seo\Plugin\Field\FieldWidget;
 use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
-use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\wn_realtime_seo\TextFieldFilter;
@@ -53,10 +52,15 @@ final class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements Conta
   /**
    * {@inheritdoc}
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings,
-                              EntityFieldManagerInterface $entity_field_manager,
-                              YoastSeoManager $manager,
-                              TextFieldFilter $text_field_filter
+  public function __construct(
+    $plugin_id,
+    $plugin_definition,
+    FieldDefinitionInterface $field_definition,
+    array $settings,
+    array $third_party_settings,
+    EntityFieldManagerInterface $entity_field_manager,
+    YoastSeoManager $manager,
+    TextFieldFilter $text_field_filter
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings, $entity_field_manager, $manager);
     $this->textFieldFilter = $text_field_filter;
@@ -96,10 +100,12 @@ final class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements Conta
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $element = [];
+
     /** @var EntityFormDisplayInterface $form_display */
     $form_display = $form_state->getFormObject()->getEntity();
     $entity_type = $form_display->getTargetEntityTypeId();
     $bundle = $form_display->getTargetBundle();
+
     /** @var array $fields */
     $fields = $this->entityFieldManager->getFieldDefinitions($entity_type, $bundle);
 
@@ -107,10 +113,7 @@ final class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements Conta
       return [];
     }
 
-    // TODO Di.
-    // DI:  Call to an undefined method Drupal\Core\Form\FormInterface::getEntity().
-    $text_field_filter = \Drupal::service('wn_realtime_seo.text_field_filter');
-    $text_fields = $text_field_filter->filterTextFields($fields);
+    $text_fields = $this->textFieldFilter->filterTextFields($fields);
 
     $element['body'] = [
       '#type' => 'select',
@@ -131,53 +134,6 @@ final class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements Conta
     ];
 
     return $element;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-    $form['#yoast_settings'] = $this->getSettings();
-
-    // Create the form element.
-    $element['yoast_seo'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Real-time SEO for drupal'),
-      '#open' => TRUE,
-      '#attached' => [
-        'library' => [
-          'yoast_seo/yoast_seo_core',
-          'yoast_seo/yoast_seo_admin',
-        ],
-      ],
-    ];
-
-    $element['yoast_seo']['focus_keyword'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Focus keyword'),
-      '#default_value' => $items[$delta]->focus_keyword ?? NULL,
-      '#description' => $this->t('Pick the main keyword or keyphrase that this post/page is about.'),
-    ];
-
-    $element['yoast_seo']['status'] = [
-      '#type' => 'hidden',
-      '#title' => $this->t('Real-time SEO status'),
-      '#default_value' => $items[$delta]->status ?? NULL,
-      '#description' => $this->t('The SEO status in points.'),
-    ];
-
-    return $element;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
-    foreach ($values as &$value) {
-      $value['status'] = $value['yoast_seo']['status'];
-      $value['focus_keyword'] = $value['yoast_seo']['focus_keyword'];
-    }
-    return $values;
   }
 
 }
