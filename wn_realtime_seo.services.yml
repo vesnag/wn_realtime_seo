@@ -5,4 +5,3 @@ services:
 
   wn_realtime_seo.field_manager:
     class: Drupal\wn_realtime_seo\RealtimeSeoFieldManager
-    arguments: []
