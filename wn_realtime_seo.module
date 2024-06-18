@@ -36,8 +36,8 @@ function wn_realtime_seo_form_node_afterbuild($form, FormStateInterface $form_st
   if (isset($form['field_yoast_seo'])) {
     $realtime_seo_field_manager = \Drupal::service('wn_realtime_seo.field_manager');
     $form = $realtime_seo_field_manager->setFieldsConfiguration($form);
+    $form = $realtime_seo_field_manager->addSnippetEditorMarkup($form);
   }
 
   return $form;
 }
-

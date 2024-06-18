@@ -8,7 +8,6 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\yoast_seo\Plugin\Field\FieldWidget\YoastSeoWidget;
 use Drupal\yoast_seo\YoastSeoManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -26,21 +25,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFactoryPluginInterface {
 
-  /**
-   * The entity field manager.
-   *
-   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
-   */
-  protected $entityFieldManager;
-
-  /**
-   * Instance of YoastSeoManager service.
-   */
-  protected $yoastSeoManager;
-
-  /**
-   * {@inheritdoc}
-   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $plugin_id,
@@ -56,7 +40,7 @@ class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFa
   /**
    * {@inheritdoc}
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityFieldManagerInterface $entity_field_manager, YoastSeoManager $manager) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, private EntityFieldManagerInterface $entity_field_manager, private YoastSeoManager $manager) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings, $entity_field_manager, $manager);
   }
 
@@ -107,7 +91,7 @@ class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFa
       return [];
     }
 
-    // TODO DI,
+    // TODO Di.
     $text_field_filter = \Drupal::service('wn_realtime_seo.text_field_filter');
     $text_fields = $text_field_filter->filterTextFields($fields);
 
@@ -139,31 +123,31 @@ class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFa
     $form['#yoast_settings'] = $this->getSettings();
 
     // Create the form element.
-    $element['yoast_seo'] = array(
+    $element['yoast_seo'] = [
       '#type' => 'details',
       '#title' => $this->t('Real-time SEO for drupal'),
       '#open' => TRUE,
-      '#attached' => array(
-        'library' => array(
+      '#attached' => [
+        'library' => [
           'yoast_seo/yoast_seo_core',
           'yoast_seo/yoast_seo_admin',
-        ),
-      ),
-    );
+        ],
+      ],
+    ];
 
-    $element['yoast_seo']['focus_keyword'] = array(
+    $element['yoast_seo']['focus_keyword'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Focus keyword'),
-      '#default_value' => isset($items[$delta]->focus_keyword) ? $items[$delta]->focus_keyword : NULL,
-      '#description' => $this->t("Pick the main keyword or keyphrase that this post/page is about."),
-    );
+      '#default_value' => $items[$delta]->focus_keyword ?? NULL,
+      '#description' => $this->t('Pick the main keyword or keyphrase that this post/page is about.'),
+    ];
 
-    $element['yoast_seo']['status'] = array(
+    $element['yoast_seo']['status'] = [
       '#type' => 'hidden',
       '#title' => $this->t('Real-time SEO status'),
-      '#default_value' => isset($items[$delta]->status) ? $items[$delta]->status : NULL,
-      '#description' => $this->t("The SEO status in points."),
-    );
+      '#default_value' => $items[$delta]->status ?? NULL,
+      '#description' => $this->t('The SEO status in points.'),
+    ];
 
     return $element;
   }

@@ -9,38 +9,38 @@ final class YoastSeoDrupalSettingsBuilder {
    */
   private array $settings = [];
 
-  public function setFields($fields) {
+  public function setFields(array $fields) {
     $this->settings['yoast_seo']['fields'] = array_merge(
       $this->settings['yoast_seo']['fields'] ?? [],
       $fields
     );
   }
 
-  public function setTokens($tokens) {
+  public function setTokens(array $tokens) {
     $this->settings['yoast_seo']['tokens'] = array_merge(
       $this->settings['yoast_seo']['tokens'] ?? [],
       $tokens
     );
   }
 
-  public function setDefaultText($defaultText) {
-    $this->settings['yoast_seo']['default_text'] = $defaultText;
+  public function setDefaultText(string $default_text) {
+    $this->settings['yoast_seo']['default_text'] = $default_text;
   }
 
-  public function setPlaceholders($placeholders) {
+  public function setPlaceholders(string $placeholders) {
     $this->settings['yoast_seo']['placeholder_text'] = $placeholders;
   }
 
-  public function setSeoTitleOverwritten($seoTitleOverwritten) {
-    $this->settings['yoast_seo']['seo_title_overwritten'] = $seoTitleOverwritten;
+  public function setSeoTitleOverwritten(string $seo_title_overwritten) {
+    $this->settings['yoast_seo']['seo_title_overwritten'] = $seo_title_overwritten;
   }
 
-  public function setTextFormat($textFormat) {
-    $this->settings['yoast_seo']['text_format'] = $textFormat;
+  public function setTextFormat(string $text_format) {
+    $this->settings['yoast_seo']['text_format'] = $text_format;
   }
 
-  public function setFormId($formId) {
-    $this->settings['yoast_seo']['form_id'] = $formId;
+  public function setFormId(string $form_id) {
+    $this->settings['yoast_seo']['form_id'] = $form_id;
   }
 
   public function getSettings() {
