@@ -3,9 +3,12 @@
 namespace Drupal\wn_realtime_seo;
 
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\yoast_seo\YoastSeoFieldManager;
 
 final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
+
+  use StringTranslationTrait;
 
   /**
    * @param array $form_after_build
@@ -87,9 +90,9 @@ final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
     $yoastSeoSettingsBuilder->setDefaultText($default_text);
 
     $placeholders = [
-      'snippetTitle' => t('Please click here to alter your page meta title'),
-      'snippetMeta' => t('Please click here and alter your page meta description.'),
-      'snippetCite' => t('/example-post'),
+      'snippetTitle' => $this->t('Please click here to alter your page meta title'),
+      'snippetMeta' => $this->t('Please click here and alter your page meta description.'),
+      'snippetCite' => $this->t('/example-post'),
     ];
     $yoastSeoSettingsBuilder->setPlaceholders($placeholders);
 
