@@ -3,42 +3,11 @@
 namespace Drupal\wn_realtime_seo;
 
 use Drupal\Component\Utility\NestedArray;
+use Drupal\yoast_seo\YoastSeoFieldManager;
 
-final class RealtimeSeoFieldManager {
-
-  public $fieldsConfiguration = [
-    // Paths to access the fields inside the form array.
-    'paths' => [
-      'title' => 'title.widget.0.value',
-      'focus_keyword' => 'field_yoast_seo.widget.0.yoast_seo.focus_keyword',
-      'seo_status' => 'field_yoast_seo.widget.0.yoast_seo.status',
-      'path' => 'path.widget.0.alias',
-    ],
-
-    // Fields to include in the field section of the configuration.
-    'fields' => [
-      'title',
-      'summary',
-      'focus_keyword',
-      'seo_status',
-      'path',
-    ],
-
-    // Tokens for the fields.
-    'tokens' => [
-      '[current-page:title]' => 'title',
-      '[node:title]' => 'title',
-      '[current-page:summary]' => 'summary',
-      '[node:summary]' => 'summary',
-    ],
-  ];
+final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
 
   /**
-   * Set fields configuration from a form.
-   *
-   * Explores the field present in the form and build a setting array
-   * that will be used by yoast_seo javascript.
-   *
    * @param array $form_after_build
    *   Node form after build.
    *
@@ -48,7 +17,7 @@ final class RealtimeSeoFieldManager {
   public function setFieldsConfiguration($form_after_build) {
     $yoast_settings = $form_after_build['#yoast_settings'];
 
-    if (!isset($yoast_settings['body']) || !isset($yoast_settings['summary'])) {
+    if (FALSE === $this->hasSufficientSettings($yoast_settings)) {
       return $form_after_build;
     }
 
@@ -59,70 +28,19 @@ final class RealtimeSeoFieldManager {
       return $form_after_build;
     }
 
-    $body_field_explode = explode('::', $body_field);
+    $body_field_path_element = $this->getFieldPathAndElement($body_field, $form_after_build);
+    $body_field_path = $body_field_path_element['field_path'];
+    $body_field_element = $body_field_path_element['field_element'];
 
-    $body_element = FALSE;
-
-    $body_field_path = '';
-    // TODO move to private method.
-    $body_field_name = $body_field_explode[0];
-    if ($body_field_name && isset($form_after_build[$body_field]['widget'][0])) {
-      $body_element = $form_after_build[$body_field]['widget'][0];
-      $body_field_path = $body_field_name.'widget.0.value';
-    }
-
-    if (isset($body_field_explode[1])) {
-      $entity_relation_item = $body_field_explode[0];
-      $field = $body_field_explode[1];
-
-      // TODO check if is nested.
-      if (isset($form_after_build[$entity_relation_item]['widget'][0]['subform'][$field])) {
-        $body_element = $form_after_build[$entity_relation_item]['widget'][0]['subform'][$field];
-      }
-      $body_field_path = $entity_relation_item.'.widget.0.subform.'.$field;
-    }
-
-    if (FALSE === $body_element) {
+    if (FALSE === $body_field_element) {
       return $form_after_build;
     }
 
-    // TODO get info for the summary.
-
-
-    // TODO set paths for body and summary
-    $this->fieldsConfiguration['paths'][$body_field_name] = '';
-    $this->fieldsConfiguration['paths'][$summary_field] = '';
-
-    $summary_path = FALSE;
-    $summary_field_explode = explode('::', $summary_field);
-    if ('body' === $summary_field) {
-      $summary_field_path = $summary_field .'.widget.0.summary';
-    }
-    else if (isset($summary_field_explode[1])) {
-      $summary_field_path = $summary_field_explode[0] .'.widget.0.subform.'.$summary_field_explode[0].'widget.0.value';
-      // TODO consider if the referenced paragraph has a body field.
-    }
-    else {
-      $summary_field_path = $summary_field .'.widget.0.value';
-    }
-
-
-    $summary_field = $summary_field_explode[0];
-    $summary_element = $form_after_build[$summary_field]['widget'][0];
-
-    if (isset($summary_field_explode[1])) {
-      $entity_relation_item = $summary_field_explode[0];
-      $field = $summary_field_explode[1];
-
-      // TODO check if is nested.
-      if (isset($form_after_build[$entity_relation_item]['widget'][0]['subform'][$field])) {
-        $summary_element = $form_after_build[$entity_relation_item]['widget'][0]['subform'][$field];
-      }
-    }
+    $summary_field_path_element = $this->getFieldPathAndElement($summary_field, $form_after_build);
+    $summary_field_path = $summary_field_path_element['field_path'];
 
     $this->fieldsConfiguration['paths'][$body_field] = $body_field_path;
     $this->fieldsConfiguration['paths']['summary'] = $summary_field_path;
-
 
     $this->fieldsConfiguration['fields'][] = $body_field;
 
@@ -178,7 +96,7 @@ final class RealtimeSeoFieldManager {
     $yoastSeoSettingsBuilder->setPlaceholders($placeholders);
 
     $yoastSeoSettingsBuilder->setSeoTitleOverwritten($is_default_meta_title);
-    $yoastSeoSettingsBuilder->setTextFormat(isset($body_element['#format']) ? $body_element['#format'] : '');
+    $yoastSeoSettingsBuilder->setTextFormat($body_element['#format'] ?? '');
     $yoastSeoSettingsBuilder->setFormId($form_after_build['#id']);
 
     $form_after_build['#attached']['drupalSettings'] = array_replace_recursive(
@@ -194,6 +112,54 @@ final class RealtimeSeoFieldManager {
       $form,
       explode('.', $key)
     );
+  }
+
+  /**
+   * @param array<string,string> $yoast_settings
+   */
+  private function hasSufficientSettings(array $yoast_settings): bool {
+    return (isset($yoast_settings['body']) && isset($yoast_settings['summary']));
+  }
+
+  /**
+   * Get the field path and field element based on the field name.
+   *
+   * @param string $field_name
+   *   The field name, which can be nested or simple.
+   * @param array $form_after_build
+   *   The form array after build.
+   *
+   * @return array
+   *   An array containing the field path and field element.
+   */
+  private function getFieldPathAndElement(string $field_name, array $form_after_build): array {
+    $body_field_explode = explode('::', $field_name);
+    $field_path = $field_element = '';
+
+    if (isset($body_field_explode[1])) {
+      $entity_relation_item = $body_field_explode[0];
+      $field = $body_field_explode[1];
+
+      if (isset($form_after_build[$entity_relation_item]['widget'][0]['subform'][$field])) {
+        $field_element = $form_after_build[$entity_relation_item]['widget'][0]['subform'][$field];
+        $field_path = sprintf('%s.widget.0.subform.%s', $entity_relation_item, $field);
+      }
+      return [
+        'field_path' => $field_path,
+        'field_element' => $field_element,
+      ];
+    }
+
+    $body_field_name = $body_field_explode[0];
+    if ($body_field_name && isset($form_after_build[$body_field_name]['widget'][0])) {
+      $field_element = $form_after_build[$body_field_name]['widget'][0];
+      $field_path = sprintf('%s.widget.0.value', $body_field_name);
+    }
+
+    return [
+      'field_path' => $field_path,
+      'field_element' => $field_element,
+    ];
   }
 
 }
