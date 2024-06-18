@@ -28,16 +28,14 @@ final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
       return $form_after_build;
     }
 
-    $body_field_path_element = $this->getFieldPathAndElement($body_field, $form_after_build);
-    $body_field_path = $body_field_path_element['field_path'];
-    $body_field_element = $body_field_path_element['field_element'];
+    $body_field_path = $this->getFieldPath($body_field, $form_after_build);
+    $body_field_element = $this->getFieldElement($body_field, $form_after_build);
 
-    if (FALSE === $body_field_element) {
+    if (empty($body_field_element)) {
       return $form_after_build;
     }
 
-    $summary_field_path_element = $this->getFieldPathAndElement($summary_field, $form_after_build);
-    $summary_field_path = $summary_field_path_element['field_path'];
+    $summary_field_path = $this->getFieldPath($summary_field, $form_after_build);
 
     $this->fieldsConfiguration['paths'][$body_field] = $body_field_path;
     $this->fieldsConfiguration['paths']['summary'] = $summary_field_path;
@@ -58,10 +56,10 @@ final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
 
       if ($field_name == $body_field) {
         $fields['body'] = $field_id;
+        continue;
       }
-      else {
-        $fields[$field_name] = $field_id;
-      }
+
+      $fields[$field_name] = $field_id;
     }
 
     $fields['meta_title'] = $form_after_build['field_meta_tags']['widget'][0]['basic']['title']['#id'];
@@ -121,45 +119,36 @@ final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
     return (isset($yoast_settings['body']) && isset($yoast_settings['summary']));
   }
 
-  /**
-   * Get the field path and field element based on the field name.
-   *
-   * @param string $field_name
-   *   The field name, which can be nested or simple.
-   * @param array $form_after_build
-   *   The form array after build.
-   *
-   * @return array
-   *   An array containing the field path and field element.
-   */
-  private function getFieldPathAndElement(string $field_name, array $form_after_build): array {
-    $body_field_explode = explode('::', $field_name);
-    $field_path = $field_element = '';
+  private function getFieldPath(string $field_name, array $form_after_build): string {
+    $field_explode = explode('::', $field_name);
 
-    if (isset($body_field_explode[1])) {
-      $entity_relation_item = $body_field_explode[0];
-      $field = $body_field_explode[1];
+    if (isset($field_explode[1])) {
+      $entity_relation_item = $field_explode[0];
+      $field = $field_explode[1];
 
       if (isset($form_after_build[$entity_relation_item]['widget'][0]['subform'][$field])) {
-        $field_element = $form_after_build[$entity_relation_item]['widget'][0]['subform'][$field];
-        $field_path = sprintf('%s.widget.0.subform.%s', $entity_relation_item, $field);
+        return sprintf('%s.widget.0.subform.%s', $entity_relation_item, $field);
       }
-      return [
-        'field_path' => $field_path,
-        'field_element' => $field_element,
-      ];
+
+      return '';
     }
 
-    $body_field_name = $body_field_explode[0];
-    if ($body_field_name && isset($form_after_build[$body_field_name]['widget'][0])) {
-      $field_element = $form_after_build[$body_field_name]['widget'][0];
-      $field_path = sprintf('%s.widget.0.value', $body_field_name);
+    $field = $field_explode[0];
+    return sprintf('%s.widget.0.value', $field);
+  }
+
+  private function getFieldElement(string $field_name, array $form_after_build): array {
+    $field_explode = explode('::', $field_name);
+
+    if (isset($field_explode[1])) {
+      $entity_relation_item = $field_explode[0];
+      $field = $field_explode[1];
+
+      return $form_after_build[$entity_relation_item]['widget'][0]['subform'][$field] ?? [];
     }
 
-    return [
-      'field_path' => $field_path,
-      'field_element' => $field_element,
-    ];
+    $field = $field_explode[0];
+    return $form_after_build[$field]['widget'][0] ?? [];
   }
 
 }
