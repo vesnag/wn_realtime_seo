@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Contains install functions for Real-time SEO for Entities.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function wn_realtime_seo_install() {
+  module_set_weight('wn_realtime_seo', 50);
+}

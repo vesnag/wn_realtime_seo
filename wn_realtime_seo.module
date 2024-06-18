@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * @file
+ * Contains wn_realtime_seo.module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\wn_realtime_seo\RealtimeSeoFieldManager;
+
+/**
+ * Implements hook_form_FORM_ID_alter() for node_form().
+ */
+function wn_realtime_seo_form_node_form_alter(&$form, &$form_state, $form_id) {
+  $form['#after_build'][] = 'wn_realtime_seo_form_node_afterbuild';
+}
+
+function wn_realtime_seo_form_node_afterbuild($form, FormStateInterface $form_state): array {
+  if (isset($form['field_yoast_seo'])) {
+    /** @var RealtimeSeoFieldManager $realtime_seo_field_manager */
+    $realtime_seo_field_manager = \Drupal::service('wn_realtime_seo.field_manager');
+    $form = $realtime_seo_field_manager->setFieldsConfiguration($form);
+  }
+
+  return $form;
+}

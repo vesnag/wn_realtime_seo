@@ -1,0 +1,7 @@
+services:
+  wn_realtime_seo.text_field_filter:
+    class: Drupal\wn_realtime_seo\TextFieldFilter
+    arguments: ['@entity_field.manager']
+
+  wn_realtime_seo.field_manager:
+    class: Drupal\wn_realtime_seo\RealtimeSeoFieldManager

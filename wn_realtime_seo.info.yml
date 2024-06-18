@@ -1,0 +1,8 @@
+name: 'Real-time SEO for Entities'
+type: module
+description: 'Adds real-time SEO page analysis for text fields'
+package: Wildstyle Network
+core_version_requirement: ^10
+dependencies:
+  - yoast_seo:yoast_seo
+configure: yoast_seo.settings
