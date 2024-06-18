@@ -8,6 +8,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\wn_realtime_seo\TextFieldFilter;
 use Drupal\yoast_seo\Plugin\Field\FieldWidget\YoastSeoWidget;
 use Drupal\yoast_seo\YoastSeoManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -23,25 +24,42 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   }
  * )
  */
-class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFactoryPluginInterface {
+final class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFactoryPluginInterface {
+
+  private TextFieldFilter $textFieldFilter;
 
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    /** @var EntityFieldManagerInterface $entityFieldManager */
+    $entityFieldManager = $container->get('entity_field.manager');
+
+    /** @var YoastSeoManager $yoastSeoManager */
+    $yoastSeoManager = $container->get('yoast_seo.manager');
+
+    /** @var TextFieldFilter TextFieldFilter */
+    $textFieldFilter = $container->get('wn_realtime_seo.text_field_filter');
+
     return new static(
       $plugin_id,
       $plugin_definition,
       $configuration['field_definition'],
       $configuration['settings'],
       $configuration['third_party_settings'],
-      $container->get('entity_field.manager'),
-      $container->get('yoast_seo.manager')
+      $entityFieldManager,
+      $yoastSeoManager,
+      $textFieldFilter
     );
   }
 
   /**
    * {@inheritdoc}
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, private EntityFieldManagerInterface $entity_field_manager, private YoastSeoManager $manager) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings,
+                              EntityFieldManagerInterface $entity_field_manager,
+                              YoastSeoManager $manager,
+                              TextFieldFilter $text_field_filter
+  ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings, $entity_field_manager, $manager);
+    $this->textFieldFilter = $text_field_filter;
   }
 
   /**
@@ -77,14 +95,12 @@ class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFa
    * {@inheritdoc}
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
-    $settings = $this->getSettings();
-    $t = 1;
-
     $element = [];
     /** @var EntityFormDisplayInterface $form_display */
     $form_display = $form_state->getFormObject()->getEntity();
     $entity_type = $form_display->getTargetEntityTypeId();
     $bundle = $form_display->getTargetBundle();
+    /** @var array $fields */
     $fields = $this->entityFieldManager->getFieldDefinitions($entity_type, $bundle);
 
     if (empty($fields)) {
@@ -92,6 +108,7 @@ class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFa
     }
 
     // TODO Di.
+    // DI:  Call to an undefined method Drupal\Core\Form\FormInterface::getEntity().
     $text_field_filter = \Drupal::service('wn_realtime_seo.text_field_filter');
     $text_fields = $text_field_filter->filterTextFields($fields);
 
@@ -157,7 +174,7 @@ class MultipleFieldsYoastSeoWidget extends YoastSeoWidget implements ContainerFa
    */
   public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
     foreach ($values as &$value) {
-      $value['status']        = $value['yoast_seo']['status'];
+      $value['status'] = $value['yoast_seo']['status'];
       $value['focus_keyword'] = $value['yoast_seo']['focus_keyword'];
     }
     return $values;

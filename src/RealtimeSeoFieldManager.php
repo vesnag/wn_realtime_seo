@@ -51,7 +51,7 @@ final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
 
     $fields = [];
     foreach ($this->fieldsConfiguration['fields'] as $field_name) {
-      $field_id = $this->formGet($form_after_build, $this->fieldsConfiguration['paths'][$field_name] . '.#id');
+      $field_id = (string) $this->formGet($form_after_build, $this->fieldsConfiguration['paths'][$field_name] . '.#id');
       if (str_contains($field_name, '::')) {
         $field_id = str_replace('-wrapper', '-0-value', $field_id);
       }
@@ -77,13 +77,13 @@ final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
     $is_default_meta_title = !empty($form_after_build['field_meta_tags']['widget'][0]['basic']['title']['#default_value']) ? TRUE : FALSE;
     $is_default_keyword = !empty($form_after_build['field_yoast_seo']['widget'][0]['yoast_seo']['focus_keyword']['#default_value']) ? TRUE : FALSE;
     $is_default_meta_description = !empty($form_after_build['field_meta_tags']['widget'][0]['basic']['description']['#default_value']) ? TRUE : FALSE;
-    $body_exists = !empty($body_element['#default_value']) ? TRUE : FALSE;
+    $body_exists = !empty($body_field_element['#default_value']) ? TRUE : FALSE;
 
     $default_text = [
       'meta_title' => $is_default_meta_title ? $form_after_build['field_meta_tags']['widget'][0]['basic']['title']['#default_value'] : '',
       'keyword' => $is_default_keyword ? $form_after_build['field_yoast_seo']['widget'][0]['yoast_seo']['focus_keyword']['#default_value'] : '',
       'meta_description' => $is_default_meta_description ? $form_after_build['field_meta_tags']['widget'][0]['basic']['description']['#default_value'] : '',
-      $body_field => $body_exists ? $body_element['#default_value'] : '',
+      $body_field => $body_exists ? $body_field_element['#default_value'] : '',
       'path' => $form_after_build['path']['widget'][0]['source']['#value'] ?? '',
     ];
     $yoastSeoSettingsBuilder->setDefaultText($default_text);
@@ -96,7 +96,7 @@ final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
     $yoastSeoSettingsBuilder->setPlaceholders($placeholders);
 
     $yoastSeoSettingsBuilder->setSeoTitleOverwritten($is_default_meta_title);
-    $yoastSeoSettingsBuilder->setTextFormat($body_element['#format'] ?? '');
+    $yoastSeoSettingsBuilder->setTextFormat($body_field_element['#format'] ?? '');
     $yoastSeoSettingsBuilder->setFormId($form_after_build['#id']);
 
     $form_after_build['#attached']['drupalSettings'] = array_replace_recursive(
@@ -107,7 +107,7 @@ final class RealtimeSeoFieldManager extends YoastSeoFieldManager {
     return $form_after_build;
   }
 
-  private function formGet($form, $key) {
+  private function formGet(array $form, string $key): mixed {
     return NestedArray::getValue(
       $form,
       explode('.', $key)
